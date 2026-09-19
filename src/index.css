@@ -1,0 +1,81 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/bodoni-moda';
+@import '@fontsource-variable/jost';
+
+/*
+ * Paleta medida nos ficheiros do logótipo, não inventada.
+ * Rácios de contraste sobre branco: rose 1,9:1 | rose-dark 4,56:1 | rose-deep 6,94:1
+ * rose é superfície, nunca texto. Texto em rosa começa em rose-dark.
+ */
+@theme {
+  --color-alc-black: #1a1a1a;
+  --color-alc-ink: #4a4441;
+  --color-alc-rose-light: #f4dccf;
+  --color-alc-rose: #d8b9ae;
+  --color-alc-rose-dark: #936d62;
+  --color-alc-rose-deep: #7a4f42;
+  --color-alc-grey: #ecebe9;
+  --color-alc-line: #ddd9d6;
+  --color-alc-white: #ffffff;
+
+  --font-display: 'Bodoni Moda Variable', Georgia, 'Times New Roman', serif;
+  --font-body: 'Jost Variable', 'Segoe UI', system-ui, sans-serif;
+
+  --radius-card: 2px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-alc-white font-body text-alc-black antialiased;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    font-optical-sizing: auto;
+  }
+
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-alc-rose-dark);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Alvo de toque mínimo para o backoffice, usado no terreno com uma mão. */
+  .toque {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  .wordmark {
+    @apply font-body font-light uppercase;
+    letter-spacing: 0.2em;
+  }
+
+  .safe-b {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
