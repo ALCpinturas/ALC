@@ -5,6 +5,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Campo from '@/components/ui/Campo'
 import Input from '@/components/ui/Input'
+import InputPassword from '@/components/ui/InputPassword'
 import RadioCards from '@/components/ui/RadioCards'
 import { EstadoErro, Esqueleto } from '@/components/ui/Estados'
 import { useAuth } from '@/lib/auth'
@@ -81,8 +82,7 @@ function PalavraPasse({ email }: { email: string | null }) {
 
       <div className="mt-4 max-w-sm space-y-4">
         <Campo etiqueta="Palavra-passe atual" erro={formulario.erros.atual} obrigatorio>
-          <Input
-            type="password"
+          <InputPassword
             autoComplete="current-password"
             value={formulario.valores.atual}
             onChange={(evento) => formulario.definir('atual', evento.target.value)}
@@ -95,8 +95,7 @@ function PalavraPasse({ email }: { email: string | null }) {
           ajuda="Pelo menos 10 caracteres, com letras e algarismos."
           obrigatorio
         >
-          <Input
-            type="password"
+          <InputPassword
             autoComplete="new-password"
             value={formulario.valores.nova}
             onChange={(evento) => formulario.definir('nova', evento.target.value)}
@@ -104,8 +103,7 @@ function PalavraPasse({ email }: { email: string | null }) {
           />
         </Campo>
         <Campo etiqueta="Confirmar nova palavra-passe" erro={formulario.erros.confirmacao} obrigatorio>
-          <Input
-            type="password"
+          <InputPassword
             autoComplete="new-password"
             value={formulario.valores.confirmacao}
             onChange={(evento) => formulario.definir('confirmacao', evento.target.value)}
@@ -179,8 +177,7 @@ function NovoUtilizador() {
           ajuda="Pelo menos 10 caracteres, com letras e algarismos."
           obrigatorio
         >
-          <Input
-            type="password"
+          <InputPassword
             autoComplete="new-password"
             value={formulario.valores.palavraPasse}
             onChange={(evento) => formulario.definir('palavraPasse', evento.target.value)}

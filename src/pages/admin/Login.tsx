@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router'
 import Button from '@/components/ui/Button'
 import Campo from '@/components/ui/Campo'
 import Input from '@/components/ui/Input'
+import InputPassword from '@/components/ui/InputPassword'
 import Logo from '@/components/site/Logo'
 import { useAuth } from '@/lib/auth'
 import { useSeo } from '@/lib/useSeo'
@@ -63,8 +64,7 @@ export default function Login() {
           </Campo>
 
           <Campo etiqueta="Palavra-passe" obrigatorio>
-            <Input
-              type="password"
+            <InputPassword
               autoComplete="current-password"
               value={palavraPasse}
               onChange={(evento) => setPalavraPasse(evento.target.value)}
