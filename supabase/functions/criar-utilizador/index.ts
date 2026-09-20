@@ -3,6 +3,7 @@
 // papel 'admin' e usa a chave de serviço, que nunca pode ir para o código do cliente.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { cabecalhosCors } from '../_shared/cors.ts'
 
 // Duplicado de src/lib/schemas/conta.ts de propósito: o Deno das Edge Functions não
 // importa de src. Se mudar um dos lados, mude o outro.
@@ -12,19 +13,6 @@ type Papel = (typeof PAPEIS)[number]
 
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const cabecalhosCors = {
-  'Access-Control-Allow-Origin': Deno.env.get('SITE_URL') ?? '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
-
-function resposta(corpo: unknown, status: number): Response {
-  return new Response(JSON.stringify(corpo), {
-    status,
-    headers: { ...cabecalhosCors, 'Content-Type': 'application/json' },
-  })
-}
-
 interface PayloadPedido {
   nome?: string
   email?: string
@@ -33,7 +21,16 @@ interface PayloadPedido {
 }
 
 Deno.serve(async (pedido) => {
-  if (pedido.method === 'OPTIONS') return new Response('ok', { headers: cabecalhosCors })
+  const cors = cabecalhosCors(pedido)
+
+  function resposta(corpo: unknown, status: number): Response {
+    return new Response(JSON.stringify(corpo), {
+      status,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  }
+
+  if (pedido.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (pedido.method !== 'POST') return resposta({ erro: 'Método não permitido.' }, 405)
 
   const autorizacao = pedido.headers.get('Authorization')

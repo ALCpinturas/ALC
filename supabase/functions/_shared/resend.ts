@@ -9,6 +9,7 @@ export async function enviarEmail(parametros: {
   assunto: string
   html: string
   texto: string
+  bcc?: string
 }): Promise<ResultadoEnvio> {
   const chave = Deno.env.get('RESEND_API_KEY')
   const remetente = Deno.env.get('ALC_EMAIL_REMETENTE')
@@ -27,6 +28,7 @@ export async function enviarEmail(parametros: {
       body: JSON.stringify({
         from: remetente,
         to: [parametros.para],
+        ...(parametros.bcc ? { bcc: [parametros.bcc] } : {}),
         subject: parametros.assunto,
         html: parametros.html,
         text: parametros.texto,

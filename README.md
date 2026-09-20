@@ -50,7 +50,7 @@ Secrets do lado do servidor, definidos com `supabase secrets set`:
 |---|---|
 | `RESEND_API_KEY` | Envio de email pelo Resend |
 | `ALC_EMAIL_REMETENTE` | Remetente verificado no Resend, ex. `ALC <geral@alc.pt>` |
-| `ALC_EMAIL_DESTINO` | Caixa interna que recebe as notificações de leads. Opcional: sem ele a função usa `ALC.pinturas@proton.me`, que está no código para a notificação nunca depender de um secret esquecido |
+| `ALC_EMAIL_DESTINO` | Caixa interna que recebe as notificações de leads e a cópia (BCC) de cada orçamento enviado a um cliente. Opcional: sem ele, ambas as funções usam `ALC.pinturas@proton.me`, que está no código para nunca depender de um secret esquecido |
 | `WEBHOOK_SECRET` | Segredo partilhado do Database Webhook |
 | `SITE_URL` | Base das ligações nos emails e origem permitida no CORS |
 
@@ -111,6 +111,8 @@ caixa da ALC. Três coisas têm de estar de pé, e falha qualquer uma e não sai
 
 O destinatário não está nesta lista de propósito: `ALC.pinturas@proton.me` é o valor por
 omissão no código da função. `ALC_EMAIL_DESTINO` sobrepõe-se, para mudar de caixa sem publicar.
+A mesma omissão e o mesmo secret controlam o BCC de `enviar-orcamento` para cada orçamento
+enviado a um cliente.
 
 Para confirmar que está a funcionar, a tabela `emails_enviados` regista cada tentativa com
 `estado` `enviado` ou `falhado` e o erro devolvido pelo Resend:

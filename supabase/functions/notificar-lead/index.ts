@@ -99,9 +99,7 @@ Deno.serve(async (pedido) => {
         ...blocos,
         {
           rotulo: 'Estimativa interna',
-          valor: `${formatarEuros(Number(registo.valor_min_cents ?? 0))} a ${formatarEuros(
-            Number(registo.valor_max_cents ?? 0),
-          )} (não mostrada ao cliente)`,
+          valor: `${formatarEuros(Number(registo.valor_estimado_cents ?? 0))} (não mostrada ao cliente)`,
         },
       ]
     : blocos

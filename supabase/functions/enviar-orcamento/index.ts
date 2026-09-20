@@ -5,6 +5,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { formatarEuros } from '../_shared/format.ts'
 import { emailOrcamento, type Contactos } from '../_shared/templates.ts'
 import { enviarEmail } from '../_shared/resend.ts'
+import { cabecalhosCors } from '../_shared/cors.ts'
 
 const CONTACTOS: Contactos = {
   nome: 'ALC, Alexandre Luís Carlitos',
@@ -16,21 +17,21 @@ const CONTACTOS: Contactos = {
 
 const VALIDADE_LIGACAO_SEGUNDOS = 7 * 24 * 60 * 60
 
-const cabecalhosCors = {
-  'Access-Control-Allow-Origin': Deno.env.get('SITE_URL') ?? '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
-
-function resposta(corpo: unknown, status: number): Response {
-  return new Response(JSON.stringify(corpo), {
-    status,
-    headers: { ...cabecalhosCors, 'Content-Type': 'application/json' },
-  })
-}
+/* Mesma lógica de notificar-lead/index.ts: a ALC tem de ficar sempre com cópia dos
+ * orçamentos enviados, mesmo que ALC_EMAIL_DESTINO nunca chegue a ser definido. */
+const DESTINO_INTERNO = 'ALC.pinturas@proton.me'
 
 Deno.serve(async (pedido) => {
-  if (pedido.method === 'OPTIONS') return new Response('ok', { headers: cabecalhosCors })
+  const cors = cabecalhosCors(pedido)
+
+  function resposta(corpo: unknown, status: number): Response {
+    return new Response(JSON.stringify(corpo), {
+      status,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  }
+
+  if (pedido.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (pedido.method !== 'POST') return resposta({ erro: 'Método não permitido.' }, 405)
 
   const autorizacao = pedido.headers.get('Authorization')
@@ -104,11 +105,14 @@ Deno.serve(async (pedido) => {
     return resposta({ ok: true, url: assinada.signedUrl }, 200)
   }
 
+  // Só um envio bem-sucedido tranca o reenvio: uma tentativa falhada (chave inválida,
+  // CORS, rede) não pode fingir-se de "já enviado" para sempre.
   const { data: jaEnviado } = await servico
     .from('emails_enviados')
     .select('id')
     .eq('tipo', 'orcamento')
     .eq('referencia_id', orcamento.id)
+    .eq('estado', 'enviado')
     .maybeSingle()
 
   if (jaEnviado) return resposta({ ok: true, repetido: true }, 200)
@@ -122,22 +126,30 @@ Deno.serve(async (pedido) => {
     CONTACTOS,
   )
 
+  const destinoInterno = Deno.env.get('ALC_EMAIL_DESTINO')?.trim() || DESTINO_INTERNO
+
   const resultado = await enviarEmail({
     para: cliente.email,
     assunto: `Orçamento ALC ${orcamento.numero}`,
     html: conteudo.html,
     texto: conteudo.texto,
+    bcc: destinoInterno,
   })
 
-  await servico.from('emails_enviados').insert({
-    tipo: 'orcamento',
-    destinatario: cliente.email,
-    referencia_id: orcamento.id,
-    referencia_tabela: 'orcamentos',
-    estado: resultado.ok ? 'enviado' : 'falhado',
-    resend_id: resultado.id ?? null,
-    erro: resultado.erro ?? null,
-  })
+  // upsert e não insert: uma tentativa anterior falhada já deixou uma linha para
+  // (tipo, referencia_id), e o reenvio tem de a substituir, não colidir com ela.
+  await servico.from('emails_enviados').upsert(
+    {
+      tipo: 'orcamento',
+      destinatario: cliente.email,
+      referencia_id: orcamento.id,
+      referencia_tabela: 'orcamentos',
+      estado: resultado.ok ? 'enviado' : 'falhado',
+      resend_id: resultado.id ?? null,
+      erro: resultado.erro ?? null,
+    },
+    { onConflict: 'tipo,referencia_id' },
+  )
 
   if (!resultado.ok) return resposta({ erro: 'O envio falhou. Tente novamente.' }, 502)
 
