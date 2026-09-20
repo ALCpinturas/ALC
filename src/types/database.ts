@@ -89,8 +89,7 @@ export type PrecoUnitarioRow = {
   descricao: string
   capitulo: string
   unidade: UnidadeLinha
-  preco_min_cents: number
-  preco_max_cents: number
+  preco_cents: number
   ativo: boolean
   ordem: number
   atualizado_em: string
@@ -112,8 +111,7 @@ export type LeadCalculadoraRow = {
   area_m2: number
   trabalhos: string[]
   estado_espaco: string
-  valor_min_cents: number
-  valor_max_cents: number
+  valor_estimado_cents: number
   estado: EstadoLead
   notas_internas: string | null
   consentimento: boolean
@@ -288,8 +286,7 @@ export type LeadUnificada = {
   trabalhos: string[] | null
   area_m2: number | null
   mensagem: string | null
-  valor_min_cents: number | null
-  valor_max_cents: number | null
+  valor_estimado_cents: number | null
   estado: EstadoLead
   notas_internas: string | null
   fotografias: string[] | null
@@ -372,6 +369,10 @@ export type Database = {
         Args: { p_orcamento_id: string; p_obra_id: string }
         Returns: undefined
       }
+      criar_nova_versao_orcamento: {
+        Args: { p_orcamento_id: string }
+        Returns: string
+      }
       gravar_lead_calculadora: {
         Args: {
           p_id: string
@@ -383,8 +384,7 @@ export type Database = {
           p_area_m2: number
           p_trabalhos: string[]
           p_estado_espaco: string
-          p_valor_min_cents: number
-          p_valor_max_cents: number
+          p_valor_cents: number
           p_consentimento_texto: string
         }
         Returns: undefined

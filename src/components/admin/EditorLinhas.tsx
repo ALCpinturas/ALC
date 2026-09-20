@@ -98,7 +98,7 @@ export default function EditorLinhas({
       capitulo: tipo.capitulo,
       descricao: tipo.descricao,
       unidade: tipo.unidade,
-      preco: centimosParaInput(tipo.preco_min_cents),
+      preco: centimosParaInput(tipo.preco_cents),
     })
   }
 
@@ -165,8 +165,7 @@ export default function EditorLinhas({
           descricao: registo.descricao,
           capitulo: registo.capitulo,
           unidade: registo.unidade,
-          preco_min_cents: registo.preco_unitario_cents,
-          preco_max_cents: registo.preco_unitario_cents,
+          preco_cents: registo.preco_unitario_cents,
         },
         tipos.map((t) => t.chave),
         Math.max(0, ...tipos.map((t) => t.ordem)) + 10,

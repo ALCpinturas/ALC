@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { codigoPostal, nif, ESTADOS_OBRA, TIPOS_INTERVENCAO } from './comum'
+import { codigoPostal, email, localidade, nif, nome, telefone, ESTADOS_OBRA, TIPOS_INTERVENCAO } from './comum'
 import { telefoneValido } from '@/lib/validacao'
 
 const opcional = (esquema: z.ZodTypeAny) =>
@@ -75,3 +75,13 @@ export const esquemaLinhaOrcamento = z.object({
 })
 
 export type DadosLinhaOrcamento = z.infer<typeof esquemaLinhaOrcamento>
+
+export const esquemaLead = z.object({
+  nome,
+  telefone,
+  email,
+  localidade,
+  mensagem: z.string().trim().nullable(),
+})
+
+export type DadosLead = z.infer<typeof esquemaLead>

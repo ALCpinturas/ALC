@@ -43,7 +43,7 @@ export function useTiposTrabalho(apenasAtivos = true) {
 
 export type DadosTipoTrabalho = Pick<
   PrecoUnitarioRow,
-  'chave' | 'descricao' | 'capitulo' | 'unidade' | 'preco_min_cents' | 'preco_max_cents' | 'ativo' | 'ordem'
+  'chave' | 'descricao' | 'capitulo' | 'unidade' | 'preco_cents' | 'ativo' | 'ordem'
 >
 
 export async function guardarTipoTrabalho(

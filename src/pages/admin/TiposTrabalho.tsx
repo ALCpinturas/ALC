@@ -24,8 +24,7 @@ interface Rascunho {
   descricao: string
   capitulo: string
   unidade: Unidade
-  precoMin: string
-  precoMax: string
+  preco: string
   ordem: string
   ativo: boolean
 }
@@ -35,8 +34,7 @@ const NOVO: Rascunho = {
   descricao: '',
   capitulo: 'Trabalhos',
   unidade: 'm2',
-  precoMin: '0,00',
-  precoMax: '0,00',
+  preco: '0,00',
   ordem: '100',
   ativo: true,
 }
@@ -47,8 +45,7 @@ function rascunhoDe(tipo: PrecoUnitarioRow): Rascunho {
     descricao: tipo.descricao,
     capitulo: tipo.capitulo,
     unidade: tipo.unidade,
-    precoMin: centimosParaInput(tipo.preco_min_cents),
-    precoMax: centimosParaInput(tipo.preco_max_cents),
+    preco: centimosParaInput(tipo.preco_cents),
     ordem: String(tipo.ordem),
     ativo: tipo.ativo,
   }
@@ -63,19 +60,14 @@ export default function TiposTrabalho() {
 
   async function guardar() {
     if (!rascunho) return
-    const min = parseEurosParaCentimos(rascunho.precoMin)
-    const max = parseEurosParaCentimos(rascunho.precoMax)
+    const preco = parseEurosParaCentimos(rascunho.preco)
 
     if (rascunho.descricao.trim().length < 3) {
       toast.error('Dê um nome ao tipo de trabalho.')
       return
     }
-    if (min === null || max === null || min < 0 || max < 0) {
-      toast.error('Os preços não são válidos.')
-      return
-    }
-    if (max > 0 && max < min) {
-      toast.error('O preço máximo não pode ser inferior ao mínimo.')
+    if (preco === null || preco < 0) {
+      toast.error('O preço não é válido.')
       return
     }
 
@@ -87,8 +79,7 @@ export default function TiposTrabalho() {
       descricao: rascunho.descricao.trim(),
       capitulo: rascunho.capitulo.trim() || 'Trabalhos',
       unidade: rascunho.unidade,
-      preco_min_cents: min,
-      preco_max_cents: max,
+      preco_cents: preco,
       ativo: rascunho.ativo,
       ordem: Number(rascunho.ordem) || 100,
     })
@@ -102,7 +93,7 @@ export default function TiposTrabalho() {
     void recarregar()
   }
 
-  const semPreco = tipos.filter((t) => t.ativo && t.preco_max_cents === 0).length
+  const semPreco = tipos.filter((t) => t.ativo && t.preco_cents === 0).length
 
   return (
     <>
@@ -158,9 +149,7 @@ export default function TiposTrabalho() {
                       <p className="truncate font-medium text-alc-black">{tipo.descricao}</p>
                       <p className="mt-1 text-sm text-alc-ink">
                         {ROTULO_UNIDADE[tipo.unidade]} ·{' '}
-                        {tipo.preco_max_cents === 0
-                          ? 'sem preço definido'
-                          : `${formatarEuros(tipo.preco_min_cents)} a ${formatarEuros(tipo.preco_max_cents)}`}
+                        {tipo.preco_cents === 0 ? 'sem preço definido' : formatarEuros(tipo.preco_cents)}
                       </p>
                     </div>
                     {!tipo.ativo ? <Badge tom="neutro">Inativo</Badge> : null}
@@ -212,25 +201,11 @@ export default function TiposTrabalho() {
                   opcoes={UNIDADES.map((u) => ({ valor: u, rotulo: ROTULO_UNIDADE[u] }))}
                 />
               </Campo>
-              <Campo etiqueta="Preço mínimo" ajuda="Por unidade">
+              <Campo etiqueta="Preço" ajuda="Por unidade, referência interna">
                 <Input
                   inputMode="decimal"
-                  value={rascunho.precoMin}
-                  onChange={(e) => setRascunho({ ...rascunho, precoMin: e.target.value })}
-                />
-              </Campo>
-              <Campo etiqueta="Preço máximo" ajuda="Topo da estimativa interna das leads">
-                <Input
-                  inputMode="decimal"
-                  value={rascunho.precoMax}
-                  onChange={(e) => setRascunho({ ...rascunho, precoMax: e.target.value })}
-                />
-              </Campo>
-              <Campo etiqueta="Ordem" ajuda="Menor aparece primeiro">
-                <Input
-                  inputMode="numeric"
-                  value={rascunho.ordem}
-                  onChange={(e) => setRascunho({ ...rascunho, ordem: e.target.value })}
+                  value={rascunho.preco}
+                  onChange={(e) => setRascunho({ ...rascunho, preco: e.target.value })}
                 />
               </Campo>
             </div>

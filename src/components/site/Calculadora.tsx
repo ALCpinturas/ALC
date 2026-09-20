@@ -161,8 +161,7 @@ export default function Calculadora() {
       p_area_m2: valores.area_m2 ?? 0,
       p_trabalhos: valores.trabalhos,
       p_estado_espaco: valores.estado_espaco,
-      p_valor_min_cents: estimativa.min_cents,
-      p_valor_max_cents: estimativa.max_cents,
+      p_valor_cents: estimativa.valor_cents,
       p_consentimento_texto: TEXTO_CONSENTIMENTO,
     })
 

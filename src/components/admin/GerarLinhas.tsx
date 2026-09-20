@@ -112,8 +112,8 @@ export default function GerarLinhas({
           descricao: `${preco.descricao} — ${medicao.divisao}`,
           unidade: preco.unidade,
           quantidade,
-          preco_unitario_cents: preco.preco_min_cents,
-          total_linha_cents: totalLinhaCentimos(quantidade, preco.preco_min_cents),
+          preco_unitario_cents: preco.preco_cents,
+          total_linha_cents: totalLinhaCentimos(quantidade, preco.preco_cents),
         })
       }
     }
@@ -144,7 +144,7 @@ export default function GerarLinhas({
         if (!estado) aoFechar()
       }}
       titulo="Gerar linhas a partir das medições"
-      descricao="Ponto de partida. As linhas ficam editáveis e os preços entram pelo valor mínimo."
+      descricao="Ponto de partida. As linhas ficam editáveis e os preços entram pelo catálogo."
       rodape={
         <>
           <Button variante="secundario" onClick={aoFechar}>

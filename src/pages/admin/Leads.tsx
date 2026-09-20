@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Download, Search } from 'lucide-react'
+import { toast } from 'sonner'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import ConfirmarDialog from '@/components/ui/ConfirmarDialog'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import { EstadoErro, EstadoVazio, Esqueleto } from '@/components/ui/Estados'
@@ -9,7 +11,7 @@ import Cabecalho from '@/components/admin/Cabecalho'
 import PainelLead from '@/components/admin/PainelLead'
 import { descarregarCsv } from '@/lib/csv'
 import { formatarArea, formatarDataHora, formatarEuros, formatarTelefone } from '@/lib/format'
-import { FILTROS_INICIAIS, POR_PAGINA, useLeads, type FiltrosLeads } from '@/lib/hooks/useLeads'
+import { apagarLead, FILTROS_INICIAIS, POR_PAGINA, useLeads, type FiltrosLeads } from '@/lib/hooks/useLeads'
 import { ESTADOS_LEAD, ROTULO_ESTADO_LEAD, ROTULO_INTERVENCAO } from '@/lib/schemas/comum'
 import { useSeo } from '@/lib/useSeo'
 import type { EstadoLead, LeadUnificada } from '@/types/database'
@@ -32,6 +34,8 @@ export default function Leads() {
   const [pesquisa, setPesquisa] = useState('')
   const [pagina, setPagina] = useState(0)
   const [aberta, setAberta] = useState<LeadUnificada | null>(null)
+  const [apagarAlvo, setApagarAlvo] = useState<LeadUnificada | null>(null)
+  const [aApagar, setAApagar] = useState(false)
 
   useEffect(() => {
     const temporizador = setTimeout(() => {
@@ -53,16 +57,35 @@ export default function Leads() {
     [aberta, locais],
   )
 
-  function mudarEstadoLocal(id: string, estado: EstadoLead) {
+  function atualizarLeadLocal(id: string, alteracoes: Partial<LeadUnificada>) {
     setLocais((anteriores) =>
-      anteriores.map((lead) => (lead.id === id ? { ...lead, estado } : lead)),
+      anteriores.map((lead) => (lead.id === id ? { ...lead, ...alteracoes } : lead)),
     )
+  }
+
+  function mudarEstadoLocal(id: string, estado: EstadoLead) {
+    atualizarLeadLocal(id, { estado })
+  }
+
+  async function apagar() {
+    if (!apagarAlvo) return
+    setAApagar(true)
+    const erro = await apagarLead(apagarAlvo)
+    setAApagar(false)
+    if (erro) {
+      toast.error(`Não foi possível apagar o pedido. ${erro}`)
+      return
+    }
+    setApagarAlvo(null)
+    if (aberta?.id === apagarAlvo.id) setAberta(null)
+    toast.success('Pedido apagado.')
+    void recarregar()
   }
 
   function exportar() {
     descarregarCsv(
       `leads-${new Date().toISOString().slice(0, 10)}.csv`,
-      ['Data', 'Nome', 'Telefone', 'Email', 'Localidade', 'Intervenção', 'Área m2', 'Origem', 'Estimativa mín.', 'Estimativa máx.', 'Estado'],
+      ['Data', 'Nome', 'Telefone', 'Email', 'Localidade', 'Intervenção', 'Área m2', 'Origem', 'Estimativa interna', 'Estado'],
       locais.map((lead) => [
         formatarDataHora(lead.criado_em),
         lead.nome,
@@ -72,8 +95,7 @@ export default function Leads() {
         lead.tipo_intervencao ? ROTULO_INTERVENCAO[lead.tipo_intervencao] : '',
         lead.area_m2 ?? '',
         lead.origem === 'calculadora' ? 'Calculadora' : 'Formulário',
-        lead.valor_min_cents ? formatarEuros(lead.valor_min_cents) : '',
-        lead.valor_max_cents ? formatarEuros(lead.valor_max_cents) : '',
+        lead.valor_estimado_cents ? formatarEuros(lead.valor_estimado_cents) : '',
         ROTULO_ESTADO_LEAD[lead.estado],
       ]),
     )
@@ -230,9 +252,7 @@ export default function Leads() {
                       <td className="px-3 py-2">{formatarArea(lead.area_m2)}</td>
                       <td className="px-3 py-2">{lead.origem === 'calculadora' ? 'Calculadora' : 'Formulário'}</td>
                       <td className="px-3 py-2 whitespace-nowrap">
-                        {lead.valor_max_cents
-                          ? `${formatarEuros(lead.valor_min_cents ?? 0)} – ${formatarEuros(lead.valor_max_cents)}`
-                          : '—'}
+                        {lead.valor_estimado_cents ? formatarEuros(lead.valor_estimado_cents) : '—'}
                       </td>
                       <td className="px-3 py-2">
                         <Badge tom={lead.estado === 'novo' ? 'escuro' : 'neutro'}>
@@ -274,6 +294,23 @@ export default function Leads() {
         lead={selecionada}
         aoFechar={() => setAberta(null)}
         aoMudarEstado={mudarEstadoLocal}
+        aoAtualizar={atualizarLeadLocal}
+        aoPedirApagar={setApagarAlvo}
+      />
+
+      <ConfirmarDialog
+        aberto={apagarAlvo !== null}
+        aoMudar={(aberto) => {
+          if (!aberto) setApagarAlvo(null)
+        }}
+        titulo="Apagar pedido"
+        descricao={
+          apagarAlvo
+            ? `O pedido de "${apagarAlvo.nome}" vai ser apagado, com as suas fotografias e notas. Esta ação não pode ser desfeita.`
+            : ''
+        }
+        ocupado={aApagar}
+        aoConfirmar={() => void apagar()}
       />
     </>
   )

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fimDoDiaLisboa, inicioDoDiaLisboa } from '@/lib/format'
+import type { DadosLead } from '@/lib/schemas/gestao'
 import { mensagemErro, supabase } from '@/lib/supabase'
 import type { EstadoLead, LeadUnificada } from '@/types/database'
 
@@ -97,4 +98,37 @@ export async function guardarNotasLead(
     .update({ notas_internas: notas })
     .eq('id', lead.id)
   return error ? mensagemErro(error) : null
+}
+
+export async function atualizarLead(
+  lead: Pick<LeadUnificada, 'id' | 'tabela'>,
+  dados: DadosLead,
+): Promise<string | null> {
+  const { nome, telefone, email, localidade } = dados
+
+  // A calculadora não tem campo de mensagem: só pedidos_contacto o grava.
+  const { error } =
+    lead.tabela === 'pedidos_contacto'
+      ? await supabase
+          .from('pedidos_contacto')
+          .update({ nome, telefone, email, localidade, mensagem: dados.mensagem ?? '' })
+          .eq('id', lead.id)
+      : await supabase
+          .from('leads_calculadora')
+          .update({ nome, telefone, email, localidade })
+          .eq('id', lead.id)
+
+  return error ? mensagemErro(error) : null
+}
+
+export async function apagarLead(
+  lead: Pick<LeadUnificada, 'id' | 'tabela' | 'fotografias'>,
+): Promise<string | null> {
+  const { error } = await supabase.from(lead.tabela).delete().eq('id', lead.id)
+  if (error) return mensagemErro(error)
+
+  if (lead.fotografias?.length) {
+    await supabase.storage.from('pedidos-fotografias').remove(lead.fotografias)
+  }
+  return null
 }

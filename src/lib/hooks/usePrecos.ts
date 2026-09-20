@@ -23,7 +23,7 @@ export function usePrecos(): Tabelas {
 
     async function carregar() {
       const [resultadoPrecos, resultadoCoeficientes] = await Promise.all([
-        supabase.from('precos_unitarios').select('chave, preco_min_cents, preco_max_cents').eq('ativo', true),
+        supabase.from('precos_unitarios').select('chave, preco_cents').eq('ativo', true),
         supabase.from('coeficientes_estado').select('*'),
       ])
       if (!ativo) return
