@@ -11,6 +11,27 @@ const MARGEM = 20
 const LARGURA_A4 = 210
 const ALTURA_A4 = 297
 
+/** Proporção real de logo-alc-monograma.png (212×250), para o logótipo nunca ficar distorcido. */
+const LOGO_RACIO = 212 / 250
+const LOGO_ALTURA = 15
+
+async function carregarLogoComoDataUrl(): Promise<string | null> {
+  try {
+    const resposta = await fetch('/logo-alc-monograma.png')
+    if (!resposta.ok) return null
+    const blob = await resposta.blob()
+    return await new Promise((resolve, reject) => {
+      const leitor = new FileReader()
+      leitor.onload = () => resolve(leitor.result as string)
+      leitor.onerror = () => reject(new Error('Falha ao ler o logótipo.'))
+      leitor.readAsDataURL(blob)
+    })
+  } catch {
+    // Sem logótipo, o PDF continua a gerar-se só com o texto do cabeçalho.
+    return null
+  }
+}
+
 interface DadosPdf {
   orcamento: OrcamentoRow
   cliente: ClienteRow
@@ -46,6 +67,7 @@ export async function gerarPdfOrcamento({
 }: DadosPdf): Promise<Blob> {
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  const logoDataUrl = await carregarLogoComoDataUrl()
 
   const colunas = {
     descricao: MARGEM,
@@ -58,9 +80,17 @@ export async function gerarPdfOrcamento({
   let y = MARGEM
 
   function cabecalhoPagina() {
-    texto(doc, EMPRESA.nome, MARGEM, y + 4, { tamanho: 20, negrito: true })
+    const logoLargura = LOGO_ALTURA * LOGO_RACIO
+    let xTexto = MARGEM
+
+    if (logoDataUrl) {
+      doc.addImage(logoDataUrl, 'PNG', MARGEM, y - 2, logoLargura, LOGO_ALTURA)
+      xTexto = MARGEM + logoLargura + 4
+    }
+
+    texto(doc, EMPRESA.nome, xTexto, y + 4, { tamanho: 20, negrito: true, cor: ROSA_FUNDO })
     // Quem emite é a pessoa singular, não uma empresa: é o nome dela que identifica o documento.
-    texto(doc, EMPRESA.responsavel, MARGEM, y + 9, { tamanho: 8 })
+    texto(doc, EMPRESA.responsavel, xTexto, y + 9, { tamanho: 8 })
 
     const direita = LARGURA_A4 - MARGEM
     texto(doc, EMPRESA.morada, direita, y, { tamanho: 8, alinhamento: 'right' })
@@ -72,8 +102,10 @@ export async function gerarPdfOrcamento({
     texto(doc, EMPRESA.telefone, direita, y + 12, { tamanho: 8, alinhamento: 'right' })
 
     y += 22
-    doc.setDrawColor(CINZA[0], CINZA[1], CINZA[2])
+    doc.setDrawColor(ROSA_FUNDO[0], ROSA_FUNDO[1], ROSA_FUNDO[2])
+    doc.setLineWidth(0.6)
     doc.line(MARGEM, y, LARGURA_A4 - MARGEM, y)
+    doc.setLineWidth(0.2)
     y += 8
   }
 
