@@ -1,4 +1,3 @@
-import AntesDepois from '@/components/site/AntesDepois'
 import Calculadora from '@/components/site/Calculadora'
 import ComoTrabalhamos from '@/components/site/ComoTrabalhamos'
 import Contactos from '@/components/site/Contactos'
@@ -29,7 +28,6 @@ export default function Home() {
         <Servicos />
         <ComoTrabalhamos />
         <Portefolio />
-        <AntesDepois />
         <PorqueALC />
         <Calculadora />
         <Faq />
