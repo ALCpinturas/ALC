@@ -30,6 +30,6 @@ export const EMPRESA = {
 export const CONDICOES_ORCAMENTO_PADRAO = [
   'Os valores apresentados incluem mão de obra e materiais indicados em cada linha.',
   'Trabalhos não previstos neste orçamento serão objeto de proposta adicional.',
-  'Pagamento: 30% na adjudicação, 40% a meio da execução, 30% na entrega.',
+  'Pagamento: 50% na adjudicação, 50% na entrega da obra.',
   'O prazo de execução é confirmado na adjudicação e depende da disponibilidade de materiais.',
 ].join('\n')
