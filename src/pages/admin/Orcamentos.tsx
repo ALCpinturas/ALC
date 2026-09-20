@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Plus } from 'lucide-react'
+import { Plus, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import ConfirmarDialog from '@/components/ui/ConfirmarDialog'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
 import { EstadoErro, EstadoVazio, Esqueleto } from '@/components/ui/Estados'
@@ -13,10 +14,11 @@ import {
   FILTROS_ORCAMENTOS_INICIAIS,
   useOrcamentos,
   type FiltrosOrcamentos,
+  type OrcamentoComRelacoes,
 } from '@/lib/hooks/useOrcamentos'
 import { formatarData, formatarEuros } from '@/lib/format'
 import { ESTADOS_ORCAMENTO, ROTULO_ESTADO_ORCAMENTO } from '@/lib/schemas/comum'
-import { supabase } from '@/lib/supabase'
+import { mensagemErro, supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 import { useSeo } from '@/lib/useSeo'
 import { cn } from '@/lib/cn'
@@ -33,6 +35,9 @@ export default function Orcamentos() {
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([])
   const [pesquisa, setPesquisa] = useState('')
   const [aCriar, setACriar] = useState(false)
+  const [pesquisaLista, setPesquisaLista] = useState('')
+  const [apagarAlvo, setApagarAlvo] = useState<OrcamentoComRelacoes | null>(null)
+  const [aApagar, setAApagar] = useState(false)
 
   useEffect(() => {
     if (!novoAberto) return
@@ -55,11 +60,34 @@ export default function Orcamentos() {
     void navegar(`/admin/orcamentos/${resultado.id}`)
   }
 
+  async function apagar() {
+    if (!apagarAlvo) return
+    setAApagar(true)
+    const { error } = await supabase.from('orcamentos').delete().eq('id', apagarAlvo.id)
+    setAApagar(false)
+    if (error) {
+      toast.error(`Não foi possível apagar o orçamento. ${mensagemErro(error)}`)
+      return
+    }
+    setApagarAlvo(null)
+    toast.success('Orçamento apagado.')
+    void recarregar()
+  }
+
   const visiveis = clientes.filter((c) =>
     c.nome.toLowerCase().includes(pesquisa.trim().toLowerCase()),
   )
 
   const porEstado = (estado: string) => orcamentos.filter((o) => o.estado === estado).length
+
+  const termo = pesquisaLista.trim().toLowerCase()
+  const orcamentosFiltrados = termo
+    ? orcamentos.filter(
+        (o) =>
+          o.numero.toLowerCase().includes(termo) ||
+          (o.cliente?.nome.toLowerCase().includes(termo) ?? false),
+      )
+    : orcamentos
 
   return (
     <>
@@ -75,6 +103,20 @@ export default function Orcamentos() {
       />
 
       <div className="space-y-4 p-4 md:p-6">
+        <div className="relative">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-alc-ink"
+          />
+          <Input
+            value={pesquisaLista}
+            onChange={(e) => setPesquisaLista(e.target.value)}
+            placeholder="Procurar por cliente ou número de orçamento"
+            aria-label="Procurar orçamento por cliente ou número"
+            className="pl-9"
+          />
+        </div>
+
         {/* Filtro rápido por estado: é assim que se procura uma proposta no dia a dia. */}
         <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
           <div role="tablist" aria-label="Filtrar por estado" className="flex gap-2">
@@ -116,6 +158,13 @@ export default function Orcamentos() {
           </div>
         ) : null}
 
+        {!aCarregar && orcamentos.length > 0 && orcamentosFiltrados.length === 0 ? (
+          <EstadoVazio
+            titulo="Nenhum orçamento corresponde à pesquisa."
+            descricao="Tente pelo nome do cliente ou pelo número do orçamento."
+          />
+        ) : null}
+
         {!aCarregar && orcamentos.length === 0 && !erro ? (
           <EstadoVazio
             titulo="Sem orçamentos com este filtro."
@@ -124,41 +173,50 @@ export default function Orcamentos() {
           />
         ) : null}
 
-        {!aCarregar && orcamentos.length > 0 ? (
+        {!aCarregar && orcamentosFiltrados.length > 0 ? (
           <ul className="space-y-2">
-            {orcamentos.map((orcamento) => (
+            {orcamentosFiltrados.map((orcamento) => (
               <li key={orcamento.id}>
-                <Link
-                  to={`/admin/orcamentos/${orcamento.id}`}
-                  className="block border border-alc-line bg-white p-4 hover:border-alc-rose-dark"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-xs uppercase tracking-wide text-alc-ink">
-                        {orcamento.numero} · versão {orcamento.versao}
-                      </p>
-                      <p className="truncate font-medium text-alc-black">
-                        {orcamento.cliente?.nome ?? 'Cliente removido'}
-                      </p>
-                      <p className="mt-1 truncate text-sm text-alc-ink">
-                        {orcamento.obra
-                          ? `Obra ${orcamento.obra.numero} · ${orcamento.obra.titulo}`
-                          : 'Sem obra associada'}
-                      </p>
+                <div className="border border-alc-line bg-white hover:border-alc-rose-dark">
+                  <Link to={`/admin/orcamentos/${orcamento.id}`} className="block p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs uppercase tracking-wide text-alc-ink">
+                          {orcamento.numero} · versão {orcamento.versao}
+                        </p>
+                        <p className="truncate font-medium text-alc-black">
+                          {orcamento.cliente?.nome ?? 'Cliente removido'}
+                        </p>
+                        <p className="mt-1 truncate text-sm text-alc-ink">
+                          {orcamento.obra
+                            ? `Obra ${orcamento.obra.numero} · ${orcamento.obra.titulo}`
+                            : 'Sem obra associada'}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <Badge tom={orcamento.estado === 'aceite' ? 'escuro' : 'neutro'}>
+                          {ROTULO_ESTADO_ORCAMENTO[orcamento.estado]}
+                        </Badge>
+                        <p className="mt-1 font-medium">{formatarEuros(orcamento.total_cents)}</p>
+                        <p className="text-xs text-alc-ink">
+                          {orcamento.data_emissao
+                            ? formatarData(orcamento.data_emissao)
+                            : 'por emitir'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <Badge tom={orcamento.estado === 'aceite' ? 'escuro' : 'neutro'}>
-                        {ROTULO_ESTADO_ORCAMENTO[orcamento.estado]}
-                      </Badge>
-                      <p className="mt-1 font-medium">{formatarEuros(orcamento.total_cents)}</p>
-                      <p className="text-xs text-alc-ink">
-                        {orcamento.data_emissao
-                          ? formatarData(orcamento.data_emissao)
-                          : 'por emitir'}
-                      </p>
-                    </div>
+                  </Link>
+                  <div className="flex justify-end border-t border-alc-line p-2">
+                    <button
+                      type="button"
+                      onClick={() => setApagarAlvo(orcamento)}
+                      className="toque flex items-center gap-1.5 rounded-[2px] px-2 text-sm text-alc-rose-deep hover:bg-alc-rose-light"
+                    >
+                      <Trash2 aria-hidden className="size-4" />
+                      Apagar
+                    </button>
                   </div>
-                </Link>
+                </div>
               </li>
             ))}
           </ul>
@@ -212,6 +270,21 @@ export default function Orcamentos() {
           )}
         </div>
       </Dialog>
+
+      <ConfirmarDialog
+        aberto={apagarAlvo !== null}
+        aoMudar={(aberto) => {
+          if (!aberto) setApagarAlvo(null)
+        }}
+        titulo="Apagar orçamento"
+        descricao={
+          apagarAlvo
+            ? `O orçamento ${apagarAlvo.numero} de ${apagarAlvo.cliente?.nome ?? 'cliente removido'} vai ser apagado, com as suas linhas e medições. A obra associada não é afetada.`
+            : ''
+        }
+        ocupado={aApagar}
+        aoConfirmar={() => void apagar()}
+      />
     </>
   )
 }

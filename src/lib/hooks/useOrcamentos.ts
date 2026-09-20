@@ -84,3 +84,17 @@ export async function criarOrcamento(
   if (error || !data) return { erro: mensagemErro(error) }
   return { id: data.id }
 }
+
+/**
+ * Cria uma nova versão de um orçamento já enviado, aceite, recusado ou expirado.
+ * A versão antiga fica intacta como histórico; a nova nasce em rascunho, pronta a editar.
+ */
+export async function criarNovaVersaoOrcamento(
+  orcamentoId: string,
+): Promise<{ id: string } | { erro: string }> {
+  const { data, error } = await supabase.rpc('criar_nova_versao_orcamento', {
+    p_orcamento_id: orcamentoId,
+  })
+  if (error || !data) return { erro: mensagemErro(error) }
+  return { id: data }
+}

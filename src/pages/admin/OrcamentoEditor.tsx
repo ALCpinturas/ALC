@@ -1,7 +1,7 @@
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { Building2, FileDown, Mail, MessageCircle, Send, Sparkles } from 'lucide-react'
+import { Building2, Copy, FileDown, Mail, MessageCircle, Send, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -18,6 +18,7 @@ import GerarLinhas from '@/components/admin/GerarLinhas'
 import { TAXAS_IVA, totais } from '@/lib/calculo/orcamento'
 import { centimosParaInput, formatarEuros, parseEurosParaCentimos, primeiroNome } from '@/lib/format'
 import { useOrcamento } from '@/lib/hooks/useOrcamento'
+import { criarNovaVersaoOrcamento } from '@/lib/hooks/useOrcamentos'
 import {
   ROTULO_ESTADO_ORCAMENTO,
   ROTULO_INTERVENCAO,
@@ -49,6 +50,7 @@ export default function OrcamentoEditor() {
   const [aGuardar, setAGuardar] = useState(false)
   const [aPreVisualizar, setAPreVisualizar] = useState(false)
   const [aEmitir, setAEmitir] = useState(false)
+  const [aVersionar, setAVersionar] = useState(false)
   const [aceitar, setAceitar] = useState(false)
   const [associar, setAssociar] = useState(false)
   const [recusar, setRecusar] = useState(false)
@@ -206,6 +208,20 @@ export default function OrcamentoEditor() {
     } finally {
       setAEmitir(false)
     }
+  }
+
+  /** Uma versão enviada, aceite, recusada ou expirada não se altera: cria-se uma nova. */
+  async function criarNovaVersao() {
+    if (!orcamento) return
+    setAVersionar(true)
+    const resultado = await criarNovaVersaoOrcamento(orcamento.id)
+    setAVersionar(false)
+    if ('erro' in resultado) {
+      toast.error(`Não foi possível criar uma nova versão. ${resultado.erro}`)
+      return
+    }
+    toast.success(`Versão ${orcamento.versao + 1} criada em rascunho.`)
+    void navegar(`/admin/orcamentos/${resultado.id}`)
   }
 
   async function enviarAoCliente() {
@@ -366,6 +382,24 @@ export default function OrcamentoEditor() {
         voltarPara={obra ? `/admin/obras/${obra.id}` : '/admin/orcamentos'}
         acoes={<Badge tom="escuro">{ROTULO_ESTADO_ORCAMENTO[orcamento.estado]}</Badge>}
       />
+
+      {bloqueado ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-alc-line bg-alc-grey px-4 py-3 md:px-6">
+          <p className="text-sm text-alc-ink">
+            Esta versão já foi {ROTULO_ESTADO_ORCAMENTO[orcamento.estado].toLowerCase()} e não
+            pode ser alterada. Para editar, crie uma nova versão.
+          </p>
+          <Button
+            variante="secundario"
+            tamanho="sm"
+            ocupado={aVersionar}
+            onClick={() => void criarNovaVersao()}
+          >
+            <Copy aria-hidden className="size-4" />
+            Criar nova versão para editar
+          </Button>
+        </div>
+      ) : null}
 
       <TabsPrimitive.Root defaultValue="linhas">
         <TabsPrimitive.List
