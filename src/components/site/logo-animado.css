@@ -1,0 +1,63 @@
+/* Logo AC animado.
+   Camadas recortadas do logo original (912x1159) com a PhotoCraft; posições em
+   percentagem da área útil do logo (667x820 px no original), por isso escala com
+   a largura que lhe derem. O traço é a imagem com o fundo branco e usa
+   mix-blend-mode: multiply, que torna o branco invisível em fundos claros. */
+
+.ac-logo {
+  position: relative;
+  width: var(--ac-largura, 120px);
+  aspect-ratio: 667 / 820;
+  --ac-dur: 1;                      /* 1 = velocidade normal; 2 = duas vezes mais lento */
+}
+.ac-logo img, .ac-logo .ac-c { position: absolute; display: block; }
+.ac-logo img { width: 100%; height: 100%; }
+
+.ac-traco  { left: 0;       top: 0;       width: 33.283% !important; height: 100% !important; }
+.ac-lambda { left: 34.033%; top: 5.366%;  width: 41.979% !important; height: 71.951% !important; }
+.ac-c      { left: 71.514%; top: 40.488%; width: 28.486%;           height: 31.098%; }
+
+/* 1. Traço: pinta-se de cima para baixo, depois cintila como madrepérola. */
+.ac-traco {
+  clip-path: inset(0 0 100% 0);
+  animation:
+    ac-pintar calc(1.1s * var(--ac-dur)) cubic-bezier(.65, 0, .35, 1) calc(.1s * var(--ac-dur)) forwards,
+    ac-iridescente 7s ease-in-out calc(1.3s * var(--ac-dur)) infinite;
+}
+@keyframes ac-pintar { to { clip-path: inset(0 0 0 0); } }
+@keyframes ac-iridescente {
+  0%, 100% { filter: hue-rotate(0deg) saturate(1); }
+  50%      { filter: hue-rotate(40deg) saturate(1.35); }
+}
+
+/* 2. Λ: desenha-se a partir do vértice. */
+.ac-lambda {
+  clip-path: inset(0 0 100% 0);
+  transform: translateY(2%);
+  animation: ac-desenhar calc(.9s * var(--ac-dur)) cubic-bezier(.22, 1, .36, 1) calc(.7s * var(--ac-dur)) forwards;
+}
+@keyframes ac-desenhar { to { clip-path: inset(0 0 0 0); transform: none; } }
+
+/* 3. C: entra a deslizar e recebe um reflexo de luz no ouro rosa. */
+.ac-c {
+  opacity: 0;
+  transform: translateX(14%);
+  animation: ac-entrar calc(.8s * var(--ac-dur)) cubic-bezier(.22, 1, .36, 1) calc(1.4s * var(--ac-dur)) forwards;
+}
+@keyframes ac-entrar { to { opacity: 1; transform: none; } }
+.ac-brilho {
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .9) 50%, transparent 65%) no-repeat;
+  background-size: 260% 100%;
+  background-position: 160% 0;
+  -webkit-mask: url("/logo-animado/c.png") center / 100% 100% no-repeat;
+          mask: url("/logo-animado/c.png") center / 100% 100% no-repeat;
+  animation: ac-reflexo calc(1.1s * var(--ac-dur)) ease-in-out calc(2.1s * var(--ac-dur)) forwards;
+}
+@keyframes ac-reflexo { to { background-position: -60% 0; } }
+
+/* Sem animação para quem pediu menos movimento no sistema. */
+@media (prefers-reduced-motion: reduce) {
+  .ac-logo * { animation: none !important; clip-path: none !important; opacity: 1 !important; transform: none !important; }
+  .ac-brilho { display: none; }
+}

@@ -3,6 +3,7 @@ import { Facebook, Instagram, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
 import Logo from './Logo'
+import LogoAnimado from './LogoAnimado'
 import { cn } from '@/lib/cn'
 import { EMPRESA } from '@/lib/empresa'
 
@@ -52,8 +53,8 @@ export default function Header() {
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 md:h-20 md:px-6">
         <a href="#inicio" aria-label="ALC, início" className="flex items-center">
-          <Logo variante="monograma" altura={44} prioritario className="md:hidden" />
-          <Logo variante="monograma" altura={56} prioritario className="hidden md:block" />
+          <LogoAnimado altura={44} className="md:hidden" />
+          <LogoAnimado altura={56} className="hidden md:block" />
         </a>
 
         <nav aria-label="Navegação principal" className="hidden items-center gap-6 lg:flex">
