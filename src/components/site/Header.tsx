@@ -1,9 +1,10 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { Menu, X } from 'lucide-react'
+import { Facebook, Instagram, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
 import Logo from './Logo'
 import { cn } from '@/lib/cn'
+import { EMPRESA } from '@/lib/empresa'
 
 const SECCOES = [
   { id: 'servicos', rotulo: 'Serviços' },
@@ -71,6 +72,26 @@ export default function Header() {
               {seccao.rotulo}
             </a>
           ))}
+          <div className="ml-2 flex items-center gap-3 border-l border-alc-line pl-4">
+            <a
+              href={EMPRESA.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook da ALC"
+              className="text-alc-ink hover:text-alc-rose-dark"
+            >
+              <Facebook aria-hidden className="size-4" />
+            </a>
+            <a
+              href={EMPRESA.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram da ALC"
+              className="text-alc-ink hover:text-alc-rose-dark"
+            >
+              <Instagram aria-hidden className="size-4" />
+            </a>
+          </div>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -110,7 +131,27 @@ export default function Header() {
                     </a>
                   ))}
                 </nav>
-                <div className="safe-b mt-auto p-4">
+                <div className="safe-b mt-auto space-y-4 p-4">
+                  <div className="flex items-center justify-center gap-6">
+                    <a
+                      href={EMPRESA.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Facebook da ALC"
+                      className="toque flex items-center justify-center text-alc-ink hover:text-alc-rose-dark"
+                    >
+                      <Facebook aria-hidden className="size-5" />
+                    </a>
+                    <a
+                      href={EMPRESA.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Instagram da ALC"
+                      className="toque flex items-center justify-center text-alc-ink hover:text-alc-rose-dark"
+                    >
+                      <Instagram aria-hidden className="size-5" />
+                    </a>
+                  </div>
                   <Button asChild tamanho="lg" className="w-full">
                     <a href="#contactos" onClick={() => setMenuAberto(false)}>
                       Pedir orçamento

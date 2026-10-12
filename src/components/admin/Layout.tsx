@@ -26,7 +26,7 @@ export default function Layout() {
     <div className="flex min-h-dvh flex-col bg-alc-grey md:flex-row">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-alc-line bg-white md:flex">
         <div className="border-b border-alc-line px-4 py-4">
-          <Logo altura={36} prioritario />
+          <Logo variante="monograma" altura={36} prioritario />
         </div>
         <nav aria-label="Navegação do backoffice" className="flex-1 p-2">
           {NAVEGACAO.map((item) => (
@@ -63,7 +63,7 @@ export default function Layout() {
       </aside>
 
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-alc-line bg-white px-4 py-2 md:hidden">
-        <Logo altura={32} prioritario />
+        <Logo variante="monograma" altura={32} prioritario />
         <div className="flex items-center gap-3">
           <span className="max-w-32 truncate text-sm text-alc-ink">{perfil?.nome ?? ''}</span>
           <button

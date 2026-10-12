@@ -1,3 +1,4 @@
+import { Facebook, Instagram } from 'lucide-react'
 import { Link } from 'react-router'
 import { EMPRESA } from '@/lib/empresa'
 import Logo from './Logo'
@@ -45,6 +46,26 @@ export default function Footer() {
             </p>
             <p className="text-alc-ink">Zonas servidas: {EMPRESA.zonasServidas}</p>
           </address>
+          <div className="mt-4 flex gap-3">
+            <a
+              href={EMPRESA.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook da ALC"
+              className="toque flex items-center justify-center border border-alc-line text-alc-rose-deep hover:border-alc-rose-dark"
+            >
+              <Facebook aria-hidden className="size-5" />
+            </a>
+            <a
+              href={EMPRESA.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram da ALC"
+              className="toque flex items-center justify-center border border-alc-line text-alc-rose-deep hover:border-alc-rose-dark"
+            >
+              <Instagram aria-hidden className="size-5" />
+            </a>
+          </div>
         </div>
       </div>
 

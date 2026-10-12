@@ -25,6 +25,8 @@ export const EMPRESA = {
   email: 'ALC.pinturas@proton.me',
   iban: 'PT50 0010 0000 5637 6720 0011 5',
   zonasServidas: 'Vila Real e arredores',
+  facebook: 'https://www.facebook.com/share/14xQAdqD7kF/',
+  instagram: 'https://www.instagram.com/lui.spadilha',
 } as const
 
 export const CONDICOES_ORCAMENTO_PADRAO = [
