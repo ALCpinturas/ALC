@@ -24,6 +24,7 @@ import {
   ROTULO_INTERVENCAO,
   TIPOS_INTERVENCAO,
 } from '@/lib/schemas/comum'
+import { abrirJanelaPendente } from '@/lib/janela'
 import { mensagemErro, mensagemErroFuncao, supabase } from '@/lib/supabase'
 import { useSeo } from '@/lib/useSeo'
 import { cn } from '@/lib/cn'
@@ -135,6 +136,7 @@ export default function OrcamentoEditor() {
 
   async function preVisualizar() {
     if (!orcamento || !cliente) return
+    const janela = abrirJanelaPendente()
     setAPreVisualizar(true)
     try {
       const { gerarPdfOrcamento } = await import('@/lib/pdf/orcamento')
@@ -144,8 +146,9 @@ export default function OrcamentoEditor() {
         obra,
         linhas,
       })
-      window.open(URL.createObjectURL(pdf), '_blank', 'noopener')
+      janela.ir(URL.createObjectURL(pdf))
     } catch (erroPreVisualizacao) {
+      janela.fechar()
       toast.error(`Não foi possível gerar a pré-visualização. ${mensagemErro(erroPreVisualizacao)}`)
     } finally {
       setAPreVisualizar(false)
@@ -238,26 +241,25 @@ export default function OrcamentoEditor() {
 
   async function enviarPorWhatsapp() {
     if (!orcamento || !cliente?.telefone) return
+    const janela = abrirJanelaPendente()
     const { data, error } = await supabase.functions.invoke<{ ok: boolean; url?: string }>(
       'enviar-orcamento',
       { body: { orcamento_id: orcamento.id, canal: 'whatsapp' } },
     )
     if (error) {
+      janela.fechar()
       toast.error(`Não foi possível preparar o WhatsApp. ${await mensagemErroFuncao(error)}`)
       return
     }
     if (!data?.url) {
+      janela.fechar()
       toast.error('Não foi possível preparar o WhatsApp.')
       return
     }
 
     const digitos = cliente.telefone.replace(/\D/g, '').replace(/^351/, '')
     const mensagem = `Olá ${primeiroNome(cliente.nome)}, aqui está o orçamento ALC ${orcamento.numero}: ${data.url}`
-    window.open(
-      `https://wa.me/351${digitos}?text=${encodeURIComponent(mensagem)}`,
-      '_blank',
-      'noopener',
-    )
+    janela.ir(`https://wa.me/351${digitos}?text=${encodeURIComponent(mensagem)}`)
   }
 
   async function marcarAceite(adjudicar: boolean): Promise<boolean> {

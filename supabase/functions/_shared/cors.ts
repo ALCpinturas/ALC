@@ -4,9 +4,14 @@
 const ORIGENS_DESENVOLVIMENTO = ['http://localhost:5173', 'http://127.0.0.1:5173']
 
 export function cabecalhosCors(pedido: Request): HeadersInit {
-  const origemSite = Deno.env.get('SITE_URL') ?? ''
+  const origemSite = semBarraFinal(Deno.env.get('SITE_URL') ?? '')
+  // Domínios extra onde o backoffice também corre (Vercel, Cloudflare Pages), separados por vírgula.
+  const extra = (Deno.env.get('ORIGENS_PERMITIDAS') ?? '')
+    .split(',')
+    .map((origem) => semBarraFinal(origem.trim()))
+    .filter(Boolean)
   const origemPedido = pedido.headers.get('origin') ?? ''
-  const origemPermitida = [origemSite, ...ORIGENS_DESENVOLVIMENTO].includes(origemPedido)
+  const origemPermitida = [origemSite, ...extra, ...ORIGENS_DESENVOLVIMENTO].includes(origemPedido)
     ? origemPedido
     : origemSite || '*'
 
@@ -16,4 +21,8 @@ export function cabecalhosCors(pedido: Request): HeadersInit {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin',
   }
+}
+
+function semBarraFinal(origem: string): string {
+  return origem.replace(/\/+$/, '')
 }

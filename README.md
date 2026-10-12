@@ -52,7 +52,8 @@ Secrets do lado do servidor, definidos com `supabase secrets set`:
 | `ALC_EMAIL_REMETENTE` | Remetente verificado no Resend, ex. `ALC <geral@alc.pt>` |
 | `ALC_EMAIL_DESTINO` | Caixa interna que recebe as notificações de leads e a cópia (BCC) de cada orçamento enviado a um cliente. Opcional: sem ele, ambas as funções usam `ALC.pinturas@proton.me`, que está no código para nunca depender de um secret esquecido |
 | `WEBHOOK_SECRET` | Segredo partilhado do Database Webhook |
-| `SITE_URL` | Base das ligações nos emails e origem permitida no CORS |
+| `SITE_URL` | Base das ligações nos emails e origem permitida no CORS. Sem barra final, ex. `https://alc-six.vercel.app` |
+| `ORIGENS_PERMITIDAS` | Opcional. Outras origens onde o backoffice corre, separadas por vírgula, ex. `https://alc.pages.dev`. Sem a origem certa aqui ou em `SITE_URL`, o browser bloqueia a chamada e aparece "Failed to send a request to the Edge Function" |
 
 ## Base de dados
 
