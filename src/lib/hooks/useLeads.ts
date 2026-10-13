@@ -124,8 +124,11 @@ export async function atualizarLead(
 export async function apagarLead(
   lead: Pick<LeadUnificada, 'id' | 'tabela' | 'fotografias'>,
 ): Promise<string | null> {
-  const { error } = await supabase.from(lead.tabela).delete().eq('id', lead.id)
+  // select() devolve as linhas apagadas: o RLS recusa em silêncio (sem erro, 0 linhas),
+  // e sem esta verificação o pedido parecia apagado e voltava ao recarregar a lista.
+  const { data, error } = await supabase.from(lead.tabela).delete().eq('id', lead.id).select('id')
   if (error) return mensagemErro(error)
+  if (!data?.length) return 'Só um administrador pode apagar pedidos.'
 
   if (lead.fotografias?.length) {
     await supabase.storage.from('pedidos-fotografias').remove(lead.fotografias)

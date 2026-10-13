@@ -1,13 +1,17 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
-import { Pencil, Plus } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import ConfirmarDialog from '@/components/ui/ConfirmarDialog'
 import { EstadoErro, EstadoVazio, Esqueleto } from '@/components/ui/Estados'
 import Cabecalho from '@/components/admin/Cabecalho'
 import FormularioCliente from '@/components/admin/FormularioCliente'
 import FormularioObra from '@/components/admin/FormularioObra'
-import { useCliente } from '@/lib/hooks/useClientes'
+import { apagarCliente, useCliente } from '@/lib/hooks/useClientes'
+import { useOrcamentos } from '@/lib/hooks/useOrcamentos'
+import { useAuth } from '@/lib/auth'
 import { useObras, FILTROS_OBRAS_INICIAIS } from '@/lib/hooks/useObras'
 import { formatarData, formatarEuros, formatarTelefone } from '@/lib/format'
 import { ROTULO_ESTADO_OBRA } from '@/lib/schemas/comum'
@@ -16,12 +20,45 @@ import { useSeo } from '@/lib/useSeo'
 export default function ClienteDetalhe() {
   const { id } = useParams<{ id: string }>()
   const { cliente, aCarregar, erro, recarregar } = useCliente(id)
-  const { obras, recarregar: recarregarObras } = useObras({
+  const { perfil } = useAuth()
+  const navegar = useNavigate()
+  const {
+    obras,
+    aCarregar: aCarregarObras,
+    recarregar: recarregarObras,
+  } = useObras({
     ...FILTROS_OBRAS_INICIAIS,
+    cliente_id: id ?? 'todos',
+  })
+  const { orcamentos, aCarregar: aCarregarOrcamentos } = useOrcamentos({
+    estado: 'todos',
     cliente_id: id ?? 'todos',
   })
   const [editar, setEditar] = useState(false)
   const [novaObra, setNovaObra] = useState(false)
+  const [confirmarApagar, setConfirmarApagar] = useState(false)
+  const [aApagar, setAApagar] = useState(false)
+
+  // Só o admin pode apagar (a base de dados também o exige) e só um cliente sem nada associado.
+  const podeApagar =
+    perfil?.papel === 'admin' &&
+    !aCarregarObras &&
+    !aCarregarOrcamentos &&
+    obras.length === 0 &&
+    orcamentos.length === 0
+
+  async function apagar() {
+    if (!cliente) return
+    setAApagar(true)
+    const erroApagar = await apagarCliente(cliente.id)
+    setAApagar(false)
+    if (erroApagar) {
+      toast.error(`Não foi possível apagar o cliente. ${erroApagar}`)
+      return
+    }
+    toast.success('Cliente apagado.')
+    void navegar('/admin/clientes')
+  }
 
   useSeo({
     titulo: cliente ? `${cliente.nome} — ALC` : 'Cliente — ALC',
@@ -57,6 +94,12 @@ export default function ClienteDetalhe() {
         voltarPara="/admin/clientes"
         acoes={
           <>
+            {podeApagar ? (
+              <Button variante="perigo" tamanho="sm" onClick={() => setConfirmarApagar(true)}>
+                <Trash2 aria-hidden className="size-4" />
+                Apagar
+              </Button>
+            ) : null}
             <Button variante="secundario" tamanho="sm" onClick={() => setEditar(true)}>
               <Pencil aria-hidden className="size-4" />
               Editar
@@ -146,6 +189,14 @@ export default function ClienteDetalhe() {
         </section>
       </div>
 
+      <ConfirmarDialog
+        aberto={confirmarApagar}
+        aoMudar={setConfirmarApagar}
+        titulo="Apagar cliente"
+        descricao={`O cliente "${cliente.nome}" vai ser apagado. Não tem obras nem orçamentos. Esta ação não pode ser desfeita.`}
+        ocupado={aApagar}
+        aoConfirmar={() => void apagar()}
+      />
       <FormularioCliente
         aberto={editar}
         cliente={cliente}

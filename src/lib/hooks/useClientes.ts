@@ -71,3 +71,13 @@ export function useCliente(id: string | undefined) {
 
   return { cliente, aCarregar, erro, recarregar: carregar }
 }
+
+/**
+ * Apaga um cliente. A base de dados recusa se ainda houver obras ou orçamentos (restrict),
+ * e só o admin pode. As leads de onde veio voltam a aparecer como não convertidas.
+ */
+export async function apagarCliente(id: string): Promise<string | null> {
+  const { data, error } = await supabase.from('clientes').delete().eq('id', id).select('id')
+  if (error) return mensagemErro(error)
+  return data?.length ? null : 'Só um administrador pode apagar clientes.'
+}

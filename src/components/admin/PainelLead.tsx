@@ -187,13 +187,12 @@ export default function PainelLead({
       rodape={
         lead ? (
           <>
-            <Button
-              variante="perigo"
-              onClick={() => aoPedirApagar(lead)}
-            >
-              <Trash2 aria-hidden className="size-4" />
-              Apagar
-            </Button>
+            {perfil?.papel === 'admin' ? (
+              <Button variante="perigo" onClick={() => aoPedirApagar(lead)}>
+                <Trash2 aria-hidden className="size-4" />
+                Apagar
+              </Button>
+            ) : null}
             <Button variante="secundario" onClick={aoFechar}>
               Fechar
             </Button>

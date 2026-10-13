@@ -125,6 +125,7 @@ export type PerfilRow = {
   id: string
   nome: string
   papel: PapelPerfil
+  oculto: boolean
   criado_em: string
 }
 
@@ -323,7 +324,7 @@ export type Database = {
         LeadCalculadoraRow,
         'id' | 'criado_em' | 'estado' | 'notas_internas' | 'consentimento_em'
       >
-      perfis: Tabela<PerfilRow, 'criado_em'>
+      perfis: Tabela<PerfilRow, 'criado_em' | 'oculto'>
       emails_enviados: Tabela<EmailEnviadoRow, 'id' | 'criado_em'>
       clientes: Tabela<ClienteRow, 'id' | 'criado_em' | 'criado_por'>
       obras: Tabela<ObraRow, 'id' | 'numero' | 'criado_em' | 'atualizado_em' | 'estado'>
