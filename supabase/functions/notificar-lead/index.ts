@@ -68,7 +68,8 @@ Deno.serve(async (pedido) => {
   const registo = payload.record ?? {}
   const id = texto(registo.id)
   const daCalculadora = payload.table === 'leads_calculadora'
-  const destinoInterno = Deno.env.get('ALC_EMAIL_DESTINO')?.trim() || DESTINO_INTERNO
+  // Minúsculas: o Resend sem domínio verificado compara o destino com o email da conta letra a letra.
+  const destinoInterno = (Deno.env.get('ALC_EMAIL_DESTINO')?.trim() || DESTINO_INTERNO).toLowerCase()
   const urlBackoffice = `${Deno.env.get('SITE_URL') ?? ''}/admin/leads`
 
   const blocos = [
@@ -161,8 +162,12 @@ Deno.serve(async (pedido) => {
     await registarEnvio('notificacao_interna', destinoInterno, resultado)
   }
 
+  /* Sem domínio verificado no Resend só é possível enviar para a própria caixa da ALC, por
+   * isso a confirmação ao cliente fica desligada. Quando houver domínio, definir o secret
+   * ALC_CONFIRMACAO_CLIENTE=true (não é preciso publicar a função outra vez). */
+  const confirmacaoLigada = Deno.env.get('ALC_CONFIRMACAO_CLIENTE')?.trim() === 'true'
   const emailCliente = texto(registo.email)
-  if (emailCliente.includes('@') && !(await jaEnviado('confirmacao_cliente'))) {
+  if (confirmacaoLigada && emailCliente.includes('@') && !(await jaEnviado('confirmacao_cliente'))) {
     const conteudo = emailConfirmacaoCliente(texto(registo.nome), blocos, CONTACTOS)
     const resultado = await enviarEmail({
       para: emailCliente,

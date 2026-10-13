@@ -51,6 +51,7 @@ Secrets do lado do servidor, definidos com `supabase secrets set`:
 | `RESEND_API_KEY` | Envio de email pelo Resend |
 | `ALC_EMAIL_REMETENTE` | Remetente verificado no Resend, ex. `ALC <geral@alc.pt>` |
 | `ALC_EMAIL_DESTINO` | Caixa interna que recebe as notificações de leads e a cópia (BCC) de cada orçamento enviado a um cliente. Opcional: sem ele, ambas as funções usam `ALC.pinturas@proton.me`, que está no código para nunca depender de um secret esquecido |
+| `ALC_CONFIRMACAO_CLIENTE` | `true` liga o email de confirmação ao cliente. Por omissão está desligado: sem domínio verificado no Resend só é possível enviar para a caixa da ALC |
 | `WEBHOOK_SECRET` | Segredo partilhado do Database Webhook |
 | `SITE_URL` | Base das ligações nos emails e origem permitida no CORS |
 

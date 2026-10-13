@@ -146,7 +146,7 @@ export default function PainelLead({
       setACriarOrcamento(false)
       return
     }
-    const resultado = await criarOrcamento(clienteId, perfil?.id ?? null)
+    const resultado = await criarOrcamento(clienteId, perfil?.id ?? null, null, lead)
     setACriarOrcamento(false)
     if ('erro' in resultado) {
       toast.error(`Não foi possível criar o orçamento. ${resultado.erro}`)
