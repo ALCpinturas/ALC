@@ -24,6 +24,7 @@ import {
   ROTULO_INTERVENCAO,
   TIPOS_INTERVENCAO,
 } from '@/lib/schemas/comum'
+import { abrirJanelaPendente } from '@/lib/janela'
 import { mensagemErro, mensagemErroFuncao, supabase } from '@/lib/supabase'
 import { useSeo } from '@/lib/useSeo'
 import { cn } from '@/lib/cn'
@@ -59,6 +60,7 @@ export default function OrcamentoEditor() {
   const [tiposObra, setTiposObra] = useState<string[]>([])
   const [obrasDoCliente, setObrasDoCliente] = useState<ObraRow[]>([])
   const [aCriarObra, setACriarObra] = useState(false)
+  const [pdfEmitido, setPdfEmitido] = useState<File | null>(null)
 
   useSeo({
     titulo: orcamento ? `Orçamento ${orcamento.numero} — ALC` : 'Orçamento — ALC',
@@ -76,6 +78,26 @@ export default function OrcamentoEditor() {
       .order('criado_em', { ascending: false })
       .then(({ data }) => setObrasDoCliente(data ?? []))
   }, [aceitar, associar, orcamento])
+
+  // O PDF emitido fica já descarregado: no iPhone, navigator.share só corre dentro do toque,
+  // e não há tempo para o ir buscar depois de carregar no botão.
+  useEffect(() => {
+    setPdfEmitido(null)
+    if (!orcamento?.pdf_path || typeof navigator.canShare !== 'function') return
+    const nome = `Orcamento-ALC-${orcamento.numero}-v${orcamento.versao}.pdf`
+    let cancelado = false
+    void supabase.storage
+      .from('orcamentos')
+      .download(orcamento.pdf_path)
+      .then(({ data }) => {
+        if (cancelado || !data) return
+        const ficheiro = new File([data], nome, { type: 'application/pdf' })
+        if (navigator.canShare({ files: [ficheiro] })) setPdfEmitido(ficheiro)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [orcamento?.pdf_path, orcamento?.numero, orcamento?.versao])
 
   useEffect(() => {
     if (!cliente || tituloObra) return
@@ -135,6 +157,7 @@ export default function OrcamentoEditor() {
 
   async function preVisualizar() {
     if (!orcamento || !cliente) return
+    const janela = abrirJanelaPendente()
     setAPreVisualizar(true)
     try {
       const { gerarPdfOrcamento } = await import('@/lib/pdf/orcamento')
@@ -144,8 +167,9 @@ export default function OrcamentoEditor() {
         obra,
         linhas,
       })
-      window.open(URL.createObjectURL(pdf), '_blank', 'noopener')
+      janela.ir(URL.createObjectURL(pdf))
     } catch (erroPreVisualizacao) {
+      janela.fechar()
       toast.error(`Não foi possível gerar a pré-visualização. ${mensagemErro(erroPreVisualizacao)}`)
     } finally {
       setAPreVisualizar(false)
@@ -238,26 +262,42 @@ export default function OrcamentoEditor() {
 
   async function enviarPorWhatsapp() {
     if (!orcamento || !cliente?.telefone) return
+
+    // No telemóvel envia-se o próprio PDF pela folha de partilha, onde se escolhe o WhatsApp.
+    // O wa.me só aceita texto, por isso fica como recurso quando não há partilha de ficheiros.
+    if (pdfEmitido) {
+      try {
+        await navigator.share({
+          files: [pdfEmitido],
+          title: `Orçamento ALC ${orcamento.numero}`,
+          text: `Olá ${primeiroNome(cliente.nome)}, segue o orçamento ALC ${orcamento.numero}.`,
+        })
+      } catch (erroPartilha) {
+        if (erroPartilha instanceof DOMException && erroPartilha.name === 'AbortError') return
+        toast.error(`Não foi possível partilhar o PDF. ${mensagemErro(erroPartilha)}`)
+      }
+      return
+    }
+
+    const janela = abrirJanelaPendente()
     const { data, error } = await supabase.functions.invoke<{ ok: boolean; url?: string }>(
       'enviar-orcamento',
       { body: { orcamento_id: orcamento.id, canal: 'whatsapp' } },
     )
     if (error) {
+      janela.fechar()
       toast.error(`Não foi possível preparar o WhatsApp. ${await mensagemErroFuncao(error)}`)
       return
     }
     if (!data?.url) {
+      janela.fechar()
       toast.error('Não foi possível preparar o WhatsApp.')
       return
     }
 
     const digitos = cliente.telefone.replace(/\D/g, '').replace(/^351/, '')
     const mensagem = `Olá ${primeiroNome(cliente.nome)}, aqui está o orçamento ALC ${orcamento.numero}: ${data.url}`
-    window.open(
-      `https://wa.me/351${digitos}?text=${encodeURIComponent(mensagem)}`,
-      '_blank',
-      'noopener',
-    )
+    janela.ir(`https://wa.me/351${digitos}?text=${encodeURIComponent(mensagem)}`)
   }
 
   async function marcarAceite(adjudicar: boolean): Promise<boolean> {
